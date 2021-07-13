@@ -1,15 +1,55 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
 
-const endpoint = 'https://randomuser.me/api/?results=20'
+const endpoint = new URL('https://randomuser.me/api/?results=20')
+
+interface User {
+  name: string
+  address: string
+}
+
+function getFlatAddress(user: any): string {
+  const { street, city, postcode, state, country, ...rest } = user.location
+  let address = `${street.name} ${street.number} - ${city} ${postcode} - ${state} ${country}`
+  return address
+}
+
+function useFetch(endpoint: URL): any {
+  const [res, setRes] = useState<JSON>()
+  useEffect(() => {
+    fetch(endpoint.href)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP${res.status}`)
+        }
+        return res.json()
+      })
+      .then(json => setRes(json))
+      .catch(error => console.log(error))
+  }, [endpoint])
+  return res && res
+}
 
 function App() {
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<User[]>([])
+  const res = useFetch(endpoint)
+  let usersArray: any[] = res ? res.results : []
+
   useEffect(() => {
-    fetch(endpoint)
-      .then(response => response.json())
-      .then(data => setUsers(data.results))
-  }, [])
+    try {
+      if (usersArray.length < 1) return
+      const newUsers: User[] = usersArray.map(user => {
+        return {
+          name: `${user.name.title} ${user.name.first} ${user.name.last}`,
+          address: getFlatAddress(user)
+        }
+      })
+      setUsers(newUsers)
+    } catch (error) {
+      console.log(error)
+    }
+  }, [usersArray])
+
   return (
     <div className="App">
       <h1>Hello Sandbox</h1>
@@ -19,18 +59,16 @@ function App() {
           <table className="container" id="users-table">
             <thead>
               <tr>
-                <th>Title</th>
-                <th>First Name</th>
-                <th>Last Name</th>
+                <th>Name</th>
+                <th>Address</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user: any, idx) => {
+              {users.map((user, idx) => {
                 return (
                   <tr key={idx}>
-                    <td className="col-md-4">{user.name.title}</td>
-                    <td className="col-md-4">{user.name.first}</td>
-                    <td className="col-md-4">{user.name.last}</td>
+                    <td className="col-md-4">{user.name}</td>
+                    <td className="col-md-4">{user.address}</td>
                   </tr>
                 )
               })}
