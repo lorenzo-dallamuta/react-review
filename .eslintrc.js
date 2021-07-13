@@ -6,7 +6,8 @@ module.exports = {
 	'extends': [
 		'eslint:recommended',
 		'plugin:react/recommended',
-		'plugin:@typescript-eslint/recommended'
+		'plugin:@typescript-eslint/recommended',
+    'prettier'
 	],
 	'parser': '@typescript-eslint/parser',
 	'parserOptions': {
@@ -18,7 +19,8 @@ module.exports = {
 	},
 	'plugins': [
 		'react',
-		'@typescript-eslint'
+		'@typescript-eslint',
+    'prettier'
 	],
 	'rules': {
 		'indent': [
@@ -33,6 +35,7 @@ module.exports = {
 			'error',
 			'single'
 		],
+    'prettier': 2,
 		'semi': [
 			'error',
 			'never'
