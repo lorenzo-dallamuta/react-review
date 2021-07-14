@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, {
+  SyntheticEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState
+} from 'react'
 import './App.css'
 
 // TODO: for order (default, ascending, descending) consider using a
@@ -62,20 +68,17 @@ function getUsers(users: any[]): User[] | null {
   }
 }
 
-function App() {
-  const [sorted, setSorted] = useState<User[]>([])
-  const [sort, setSort] = useState<Sort>({
-    order: Order.default,
-    property: 'name'
-  })
-
-  const res = useFetch(endpoint)
-  const data: any[] = useMemo(() => (res ? res.results : null), [res])
-  const users = useMemo(() => (data ? getUsers(data) : null), [data])
-
+function useSelectors(users: User[], sort: Sort, filter: string) {
+  const [sorted, setSorted] = useState<User[]>(users)
   useEffect(() => {
     if (!users) return
-    const newUsers = users.slice()
+    const newUsers = users
+      .slice()
+      .filter(
+        user =>
+          user.name.toLowerCase().indexOf(filter.toLowerCase()) >= 0 ||
+          user.address.toLowerCase().indexOf(filter.toLowerCase()) >= 0
+      )
     if (sort.order > 0) {
       newUsers.sort((a, b) => {
         const prop = sort.property as keyof typeof a // typescript..
@@ -84,7 +87,21 @@ function App() {
       })
     }
     setSorted(newUsers)
-  }, [users, sort])
+  }, [users, sort, filter])
+  return sorted
+}
+
+function App() {
+  const [sort, setSort] = useState<Sort>({
+    order: Order.default,
+    property: 'name'
+  })
+  const [filter, setFilter] = useState<string>('')
+
+  const res = useFetch(endpoint)
+  const data: any[] = useMemo(() => (res ? res.results : []), [res])
+  const users = useMemo(() => (data ? getUsers(data) : []), [data])
+  const sorted = users ? useSelectors(users, sort, filter) : []
 
   function stepSort(property: 'name' | 'address') {
     const nextOrder = sort.order < 2 ? sort.order + 1 : 0
@@ -95,6 +112,15 @@ function App() {
     <div className="App">
       <h1>Hello Sandbox</h1>
       <h2>StartEditing to see how you suck</h2>
+      <div className="searchbar-container">
+        <input
+          type="text"
+          className="searchbar-input"
+          id="users-searchbar"
+          onChange={e => setFilter(e.target.value)}
+          value={filter}
+        />
+      </div>
       <section className="flat-users">
         {sorted.length > 0 && (
           <table className="container" id="users-table">
