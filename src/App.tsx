@@ -70,8 +70,8 @@ function App() {
   })
 
   const res = useFetch(endpoint)
-  const data: any[] = res ? res.results : null
-  const users = data ? getUsers(data) : null
+  const data: any[] = useMemo(() => (res ? res.results : null), [res])
+  const users = useMemo(() => (data ? getUsers(data) : null), [data])
 
   useEffect(() => {
     if (!users) return
