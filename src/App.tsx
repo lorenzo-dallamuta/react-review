@@ -1,10 +1,4 @@
-import React, {
-  SyntheticEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState
-} from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 // TODO: for order (default, ascending, descending) consider using a
@@ -76,8 +70,8 @@ function useSelectors(users: User[], sort: Sort, filter: string) {
       .slice()
       .filter(
         user =>
-          user.name.toLowerCase().indexOf(filter.toLowerCase()) >= 0 ||
-          user.address.toLowerCase().indexOf(filter.toLowerCase()) >= 0
+          user.name.toLowerCase().includes(filter.toLowerCase()) ||
+          user.address.toLowerCase().includes(filter.toLowerCase())
       )
     if (sort.order > 0) {
       newUsers.sort((a, b) => {
@@ -96,7 +90,9 @@ function App() {
     order: Order.default,
     property: 'name'
   })
+  const [input, setInput] = useState<string>('')
   const [filter, setFilter] = useState<string>('')
+  const [validation, setValidation] = useState<boolean>(false)
 
   const res = useFetch(endpoint)
   const data: any[] = useMemo(() => (res ? res.results : []), [res])
@@ -108,6 +104,14 @@ function App() {
     setSort({ ...sort, property: property, order: nextOrder })
   }
 
+  function handleFilter() {
+    const regexAlphanNumeric = /^[0-9a-zA-Z]*$/
+    const valid = input.match(regexAlphanNumeric) ? true : false
+    setValidation(!valid)
+    const newFilter = valid ? input : ''
+    setFilter(newFilter)
+  }
+
   return (
     <div className="App">
       <h1>Hello Sandbox</h1>
@@ -117,10 +121,20 @@ function App() {
           type="text"
           className="searchbar-input"
           id="users-searchbar"
-          onChange={e => setFilter(e.target.value)}
-          value={filter}
+          onChange={e => setInput(e.target.value)}
+          onKeyPress={e => {
+            if (e.key !== 'Enter') return
+            handleFilter()
+          }}
+          value={input}
         />
+        <button className="searchbar-button" onClick={handleFilter}>
+          SEARCH
+        </button>
       </div>
+      {validation && (
+        <p className="searchbar-validation">Only letters and numbers</p>
+      )}
       <section className="flat-users">
         {sorted.length > 0 && (
           <table className="container" id="users-table">
